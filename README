@@ -1,0 +1,69 @@
+====================================================================================
+
+	TEACA BOGDAN
+
+====================================================================================
+
+	Pentru aceasta tema am definit structurile "dns_header_t", "dns_question_t"
+si "dns_rr_t" si constantele tipurilor de query-uri (interogari) descrise in enuntul
+temei in fisierul header "dnsclientheader.h".
+
+	Am citit din fisierul "dns_servers.conf" adresele ip de pe liniile necomentate
+si le-am stocat in vectorul de string-uri "dnsServersIPs".
+
+	Am ales ca durata de timeout (timpul cat sa astepte clientul un raspuns de
+la serverul dns) sa fie de 5 secunde.
+
+	Mai intai ma conectez la primul server DNS din vectorul de string-uri
+corespunzator adreselor IP din fisierul citit, iar apoi pregatesc mesajul care
+trebuie trimis catre server-ul DNS pe baza argumentelor date programului (nume de
+domeniu / adresa ip si query type-ul (tipul de interogare)). Astfel, pun in buffer
+structura de tip header a mesajului, un sir de caractere care reprezinta
+numele domeniului si structura question.
+
+	Verific daca query type-ul dat ca parametru este de tip PTR (Domain Name
+Pointer), iar daca este PTR, atunci inseamna ca primul parametru este o adresa IP
+careia trebuie sa ii inversez ordinea octetilor (de exemplu IP-ul 209.244.0.3
+devine 3.0.244.209) folosind functia "reverseWords", dupa care ii adaug
+".in-addr.arpa" la sfarsit pentru reverse lookup.
+
+	Apoi, indiferent de tipul interogarii, transform numele domeniului sau
+string-ul obtinut din IP in formatul DNS (de exemplu "www.yahoo.com" devine
+"3www5yahoo3com0") folosind functia "convertDnsToTextFormat".
+
+	Inainte sa trimit mesajul catre serverul DNS, scriu o singura data mesajul
+in fisierul "message.log" in format hexa, dupa care trimit mesajul catre server.
+
+	In cazul in care serverul nu raspunde pana la timeout sau apare o eroare la
+trimiterea mesajului catre server, iau urmatoarea adresa IP de server DNS si incerc
+sa-i trimit acestuia.
+
+	In momentul in care primesc mesajul de la serverul DNS, verific ce tipuri
+de Resource Record-uri am primit (Answer, Authority si/sau Additional). Pentru
+fiecare Resource Record primit, il prelucrez si il afisez in fisierul "dns.log"
+folosind functia "writeInDNSLog".
+
+	In aceasta functie "writeInDNSLog", transform pe rand fiecare informatie
+din formatul DNS in formatul text (human-readable, adica de scriere in fisier).
+
+	Mai intai convertesc in text normal numele domeniului si il scriu in fisier,
+clasa ("IN"), apoi tipul interogarii "NS", "A", "MX", etc, iar apoi urmatoarele
+informatii scrise in fisier depind de tipul query-ului.
+
+	In functie de tipul query-ului, am decomprimat campurile/informatiile din
+mesaj conform RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt) folosind unde este
+cazul functia "convertDnsToTextFormat" si scriu in fisierul "dns.log" informatiile
+in formatul cerut in enuntul temei.
+
+	Astfel, afisez pentru fiecare tip de Resource Record (answer, authority
+si/sau additional) informatiile din mesajul primit in fisierul "dns.log" conform
+formatului din enunt.
+
+	Pentru verificarea corectitudinii mesajelor printate in fisierul "dns.log"
+am utilizat comenzile "dig" si "host", iar a celor printate in fisierul "message.log"
+am folosit software-ul "Wireshark".
+
+	Mentionez ca am indeplinit conditia din enuntul temei de a NU utiliza
+functiile "getaddrinfo", "getnameinfo", "gethostbyname" sau "gethostbyaddr".
+
+====================================================================================
